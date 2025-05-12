@@ -1,0 +1,38 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(customer, "Customer", "A customer of the flowershop")
+
+System_Boundary(flowerShopSystem, "Flowershop System") {
+
+  Container(webApp, "Web Application", "JavaScript, React", "Delivers the static content and the flowershop single page application.")
+  Container(spa, "Single-Page Application", "JavaScript, React", "Provides all the flowershop functionality to customers via their web browser.")
+
+  Container(apiGateway, "API-Gateway", "Java, Spring Boot", "Provides flowershop functionality via a JSON/REST HTTPS API.")
+
+  Container(customersService, "customers-service", "Java, Spring Boot", "Provides customer functionality via a JSON/REST HTTPS API.")
+  Container(productService, "product-catalog-service", "Java, Spring Boot", "Provides product functionality via a JSON/REST HTTPS API.")
+  Container(shoppingcartService, "shoppingcart-service", "Java, Spring Boot", "Provides shopping cart functionality via a JSON/REST HTTPS API.")
+  Container(orderService, "order-service", "Java, Spring Boot", "Provides order functionality using the aggregator pattern via a JSON/REST HTTPS API.")
+
+  ContainerDb(customerDb, "Customer DB", "PostgreSQL", "Stores customer information")
+  ContainerDb(productDb, "Product DB", "MongoDB", "Stores flower catalog information")
+  ContainerDb(cartDb, "ShoppingCart DB", "MySQL", "Stores customer shopping carts")
+  ContainerDb(orderDb, "Order DB", "MySQL", "Stores order information")
+}
+
+Rel(customer, webApp, "Visits flowershop.com using", "HTTPS")
+Rel(webApp, spa, "Delivers to the customer's web browser")
+Rel(spa, apiGateway, "Makes API calls to", "JSON/REST/HTTPS")
+
+Rel(apiGateway, customersService, "Makes API calls to", "JSON/REST/HTTPS")
+Rel(apiGateway, productService, "Makes API calls to", "JSON/REST/HTTPS")
+Rel(apiGateway, shoppingcartService, "Makes API calls to", "JSON/REST/HTTPS")
+Rel(apiGateway, orderService, "Makes API calls to", "JSON/REST/HTTPS")
+
+Rel(customersService, customerDb, "Reads from and writes to", "JDBC/SQL/TCP")
+Rel(productService, productDb, "Reads from and writes to", "MongoDB/TCP")
+Rel(shoppingcartService, cartDb, "Reads from and writes to", "JDBC/SQL/TCP")
+Rel(orderService, orderDb, "Reads from and writes to", "JDBC/SQL/TCP")
+
+@enduml

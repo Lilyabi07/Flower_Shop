@@ -1,0 +1,14 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(customer, "Customer", "A customer of the flower shop")
+System(flowerShop, "Flowershop System", "Allows customers to browse flower inventory.")
+
+Rel(customer, flowerShop, "Orders flowers from the Flowershop System")
+
+
+LAYOUT_WITH_LEGEND()
+
+SHOW_LEGEND()
+
+@enduml

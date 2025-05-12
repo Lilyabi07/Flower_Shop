@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+
+  # MongoDB for product-catalog-service
+  mongo:
+    image: mongo:8.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # disable all container logs
+    logging:
+      driver: "none"
+
+  # PostgreSQL for customers-service
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_DB: flowershop
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  # MySQL for shoppingcart and order service
+  mysql:
+    image: mysql:8.4
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: flowershop
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Product Catalog Service (listens on 8081)
+  product-catalog-service:
+    build:
+      context: ./product-catalog-service
+    container_name: product-catalog-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: on-failure
+
+  # Customers Service (listens on 8082)
+  customers-service:
+    build:
+      context: ./customers-service
+    container_name: customers-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  # Shoppingcart Service (listens on 8083)
+  shoppingcart-service:
+    build:
+      context: ./shoppingcart-service
+    container_name: shoppingcart-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: on-failure
+
+  # Order Service (listens on 8085)
+  order-service:
+    build:
+      context: ./order-service
+    container_name: order-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: on-failure
+
+  # API Gateway (listens on 8080)
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - product-catalog-service
+      - customers-service
+      - shoppingcart-service
+      - order-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+volumes:
+  mongo_data:
+  pg_data:
+  mysql_data:
